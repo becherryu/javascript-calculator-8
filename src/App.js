@@ -17,6 +17,7 @@ class App {
       printResult(sum);
     } catch (error) {
       Console.print(`[ERROR] ${error.message}`);
+      throw new Error(`[ERROR] ${error.message}`);
     }
   }
 }
@@ -28,7 +29,30 @@ async function getInput() {
 
 // 2. 구분자를 기준으로 숫자 분리하기
 function getNumbers(input) {
-  const SEPARATOR = /,|:/;
+  // 기본 구분자
+  let separators = [",", ":"];
+
+  // 커스텀 구분자
+  const customSeparatorInput = /^\/\/(.+)\\n(.*)$/;
+  const matchInput = input.match(customSeparatorInput);
+
+  if (matchInput) {
+    const [, customSeparator, numbers] = matchInput;
+
+    // 구분자가 숫자이면 에러 발생
+    if (!Number.isNaN(Number(customSeparator))) {
+      throw new Error("구분자는 숫자가 될 수 없습니다.");
+    }
+
+    separators.push(customSeparator);
+    input = numbers;
+  }
+
+  // 구분자를 정규식으로 변환
+  const escapeSeparator = separators.map((sep) =>
+    sep.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")
+  );
+  const SEPARATOR = new RegExp(escapeSeparator.join("|"));
 
   return input.split(SEPARATOR).map(Number);
 }
